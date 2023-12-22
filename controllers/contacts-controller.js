@@ -1,81 +1,93 @@
-
-const contactsService = require('../models/contacts');
 const HttpError = require('../helpers/HttpError')
-const { contactAddSchema, contactUpdateSchema } = require('../schemas/contact-schemas')
+const { contactAddSchema, contactUpdateSchema, contactUpdateFavoriteSchema, Contact } = require('../models/ContactsModel.js')
 
 const getAll = async (req, res, next) => {
     try {
-        const result = await contactsService.listContacts(); 
+        const result = await Contact.find(); 
         res.json(result)
     } catch (error) {
        next(error)
     }
 }
 
-const getById = async (req, res, next) => {
-    try {
-         const { contactId } = req.params;
-        const result = await contactsService.getContactById(contactId);
-        if (!result) {
-           throw HttpError(404, "Not found")
-        }
-         res.json(result);
-    } catch (error) {
-       next(error)
-    }
-}
-
-const add = async (req, res, next) => {
-    try {
-        const { error } = contactAddSchema.validate(req.body);
-        if (error) {
-            throw HttpError(400, error.message);
-        }
-        const result = await contactsService.addContact(req.body);
-
-        res.status(201).json(result)
-
-    } catch (error) {
+ const getById = async (req, res, next) => {
+     try {
+          const { contactId } = req.params;
+         const result = await Contact.findById(contactId);
+         if (!result) {
+            throw HttpError(404, "Not found")
+         }
+          res.json(result);
+     } catch (error) {
         next(error)
-    }
-}
+     }
+ }
 
-const updateById = async (req, res, next) => {
-    try {
-        const { error } = contactUpdateSchema.validate(req.body);
-        if (error) {
+ const add = async (req, res, next) => {
+     try {
+         const { error } = contactAddSchema.validate(req.body);
+         if (error) {
              throw HttpError(400, error.message);
-        }
-        const { contactId } = req.params;
-        const result = await contactsService.updateContactById(contactId, req.body);
-        if (!result) {
-            throw HttpError(404, "Not founds");
-        }
+         }
+         const result = await Contact.create(req.body);
 
-        res.json(result);
-    }
-    catch (error) {
-        next(error);
-    }
-}
-const deleteById = async (req, res, next) => {
+         res.status(201).json(result)
+
+     } catch (error) {
+         next(error)
+     }
+ }
+
+ const updateById = async (req, res, next) => {
+     try {
+         const { error } = contactUpdateSchema.validate(req.body);
+         if (error) {
+              throw HttpError(400, error.message);
+         }
+         const { contactId } = req.params;
+         const result = await Contact.findByIdAndUpdate(contactId, req.body);
+         if (!result) {
+             throw HttpError(404, "Not found");
+         }
+
+         res.json(result);
+     }
+     catch (error) {
+         next(error);
+     }
+ }
+
+const updateStatusContact = async (req, res, next) => {
     try {
-        const { contactId } = req.params;
-        const result = await contactsService.removeContact(contactId);
+         const { error } = contactUpdateFavoriteSchema.validate(req.body);
+         if (error) {
+              throw HttpError(400, error.message);
+         }
+         const { contactId } = req.params;
+        const result = await Contact.findByIdAndUpdate(contactId, req.body);
         if (!result) {
-           throw HttpError(404, `Not found`)
+            throw HttpError(404, "Not found")
         }
-        return res.json({
-            message: "contact deleted"
-        }
-            
-         )
-
-
+        res.json(result)
     } catch (error) {
-        next(error)
-    }
-}
+        next(error);
+     }
+ }
+ const deleteById = async (req, res, next) => {
+     try {
+         const { contactId } = req.params;
+         const result = await Contact.findByIdAndDelete(contactId);
+         if (!result) {
+            throw HttpError(404, `Not found`)
+         }
+         return res.json({
+             message: "contact deleted"
+         }            
+          )
+     } catch (error) {
+         next(error)
+     }
+ }
 
 
 
@@ -84,6 +96,7 @@ module.exports = {
     getById,
     add,
     updateById,
+    updateStatusContact,
     deleteById
 
 }
