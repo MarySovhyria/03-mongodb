@@ -2,18 +2,22 @@ const HttpError = require('../helpers/HttpError')
 const { contactAddSchema, contactUpdateSchema, contactUpdateFavoriteSchema, Contact } = require('../models/ContactsModel.js')
 
 const getAll = async (req, res, next) => {
+    const { _id: owner } = req.user;
     try {
-        const result = await Contact.find(); 
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (page - 1) * limit;
+        const result = await Contact.find({ owner }, "-createdAt -updatedAt", { skip, limit}).populate("owner", "username"); 
         res.json(result)
     } catch (error) {
        next(error)
     }
 }
 
- const getById = async (req, res, next) => {
+const getById = async (req, res, next) => {
+     const { _id: owner } = req.user;
      try {
-          const { contactId } = req.params;
-         const result = await Contact.findById(contactId);
+         const { contactId } = req.params;
+         const result = await Contact.findById({owner, contactId});
          if (!result) {
             throw HttpError(404, "Not found")
          }
@@ -29,7 +33,8 @@ const getAll = async (req, res, next) => {
          if (error) {
              throw HttpError(400, error.message);
          }
-         const result = await Contact.create(req.body);
+         const { _id: owner } = req.user;
+         const result = await Contact.create({ ...req.body, owner });
 
          res.status(201).json(result)
 
@@ -44,8 +49,9 @@ const getAll = async (req, res, next) => {
          if (error) {
               throw HttpError(400, error.message);
          }
+         const { _id: owner } = req.user;
          const { contactId } = req.params;
-         const result = await Contact.findByIdAndUpdate(contactId, req.body);
+         const result = await Contact.findByIdAndUpdate({contactId, owner}, req.body);
          if (!result) {
              throw HttpError(404, "Not found");
          }

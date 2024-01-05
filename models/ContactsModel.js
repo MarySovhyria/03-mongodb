@@ -18,7 +18,12 @@ const contactSchema = new Schema(
       type: Boolean,
       default: false,
     },
-  }
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true
+    }
+  }, { versionKey: false, timestamps: true }
 );
 
 contactSchema.pre("findOneAndUpdate", setUpdate)
@@ -31,7 +36,7 @@ const contactAddSchema = Joi.object({
   }),
   email: Joi.string().email().required(),
   phone: Joi.string().required(),
-  favorite: Joi.boolean().required(),
+  // favorite: Joi.boolean().required(),
 });
 
 const contactUpdateSchema = Joi.object({
