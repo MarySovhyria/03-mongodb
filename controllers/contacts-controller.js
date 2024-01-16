@@ -1,5 +1,9 @@
+const fs = require('fs/promises');
+const path = require('path')
 const HttpError = require('../helpers/HttpError')
 const { contactAddSchema, contactUpdateSchema, contactUpdateFavoriteSchema, Contact } = require('../models/ContactsModel.js')
+
+const avatarPath = path.resolve("public", "avatars");
 
 const getAll = async (req, res, next) => {
     const { _id: owner } = req.user;
@@ -33,8 +37,14 @@ const getById = async (req, res, next) => {
          if (error) {
              throw HttpError(400, error.message);
          }
+         
          const { _id: owner } = req.user;
-         const result = await Contact.create({ ...req.body, owner });
+         const { path: oldPath, filename } = req.file;
+         console.log(req.file)
+        const newPath = path.join(avatarPath, filename);
+        await fs.rename(oldPath, newPath);
+        const avatar = path.join('avatars', filename)
+        const result = await Contact.create({ ...req.body, avatar, owner });
 
          res.status(201).json(result)
 
@@ -70,7 +80,7 @@ const updateStatusContact = async (req, res, next) => {
               throw HttpError(400, error.message);
          }
          const { contactId } = req.params;
-        const result = await Contact.findByIdAndUpdate(contactId, req.body);
+        const result = await Contact.findByIdAndUpdate({owner, contactId}, req.body);
         if (!result) {
             throw HttpError(404, "Not found")
         }
@@ -82,7 +92,7 @@ const updateStatusContact = async (req, res, next) => {
  const deleteById = async (req, res, next) => {
      try {
          const { contactId } = req.params;
-         const result = await Contact.findByIdAndDelete(contactId);
+         const result = await Contact.findByIdAndDelete({owner, contactId});
          if (!result) {
             throw HttpError(404, `Not found`)
          }

@@ -5,7 +5,12 @@ const HttpError = require('../helpers/HttpError')
 const ctrlWrapper = require('../decorators/ctrlWrapper')
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
+const fs = require('fs')
+const gravatar = require('gravatar');
+const jimp = require("jimp")
+const path = require('path')
 
+const avatarPath = path.resolve("public", "avatars");
 
 const register = async (req, res) => {
     const { email, password } = req.body;
@@ -13,8 +18,9 @@ const register = async (req, res) => {
     if (user) {
         throw HttpError(409, "Email already in use")
     }
+    const avatarURL = gravatar.url(email)
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ ...req.body, password: hashPassword });
+    const newUser = await User.create({ ...req.body, password: hashPassword, avatarURL });
 
     res.json({
         email: newUser.email,
@@ -67,9 +73,34 @@ const logout = async (req, res) => {
     
 }
 
+const updateAvatar = async (req, res) => {
+   const { _id } = req.user;
+    const { path: oldPath, filename } = req.file;
+    const newPath = path.join(avatarPath, filename);
+
+    const image = await jimp.read(oldPath);
+
+    await image.resize(250, 250);
+
+    await image.writeAsync(oldPath);
+
+    await fs.rename(oldPath, newPath);
+
+    const avatar = path.join("avatars", filename);
+    const result = await User.findOneAndUpdate(_id, { avatarURL: avatar });
+    if (!result) {
+        throw HttpError(404, `Could not update user with id=${_id}`);
+    }
+
+    res.json({
+        "avatarURL": result.avatarURL
+    })
+    
+}
 module.exports = {
     register: ctrlWrapper(register),
     login: ctrlWrapper(login),
     current: ctrlWrapper(current),
-    logout: ctrlWrapper(logout)
+    logout: ctrlWrapper(logout),
+    updateAvatar: ctrlWrapper(updateAvatar)
 }
