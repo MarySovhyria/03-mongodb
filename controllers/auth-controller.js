@@ -5,7 +5,7 @@ const HttpError = require('../helpers/HttpError')
 const ctrlWrapper = require('../decorators/ctrlWrapper')
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
-const fs = require('fs')
+const fs = require('fs/promises')
 const gravatar = require('gravatar');
 const jimp = require("jimp")
 const path = require('path')
@@ -77,19 +77,14 @@ const updateAvatar = async (req, res) => {
    const { _id } = req.user;
     const { path: oldPath, filename } = req.file;
     const newPath = path.join(avatarPath, filename);
-
     const image = await jimp.read(oldPath);
-
     await image.resize(250, 250);
-
     await image.writeAsync(oldPath);
-
     await fs.rename(oldPath, newPath);
-
     const avatar = path.join("avatars", filename);
     const result = await User.findOneAndUpdate(_id, { avatarURL: avatar });
     if (!result) {
-        throw HttpError(404, `Could not update user with id=${_id}`);
+        throw HttpError(401, `Not authorized`);
     }
 
     res.json({
