@@ -13,7 +13,7 @@ router.get('/', contactsController.getAll);
 
 router.get('/:contactId', isValidId, contactsController.getById)
 
-router.post('/', upload.single('avatar'), isEmptyBody, contactsController.add)
+router.post('/', isEmptyBody, contactsController.add)
 
 router.delete('/:contactId', isValidId, contactsController.deleteById)
 

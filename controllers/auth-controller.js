@@ -74,7 +74,10 @@ const logout = async (req, res) => {
 }
 
 const updateAvatar = async (req, res) => {
-   const { _id } = req.user;
+    if (!req.file) {
+        throw HttpError(400, "You have not attached any files")
+    }
+    const { _id } = req.user;
     const { path: oldPath, filename } = req.file;
     const newPath = path.join(avatarPath, filename);
     const image = await jimp.read(oldPath);
