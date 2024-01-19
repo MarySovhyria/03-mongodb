@@ -10,6 +10,8 @@ const upload = require('../../midlewares/upload')
 const authRouter = express.Router();
 
 authRouter.post('/register', isEmptyBody, authController.register);
+authRouter.get("/verify/:verificationCode", authController.verify);
+authRouter.post('/verify', isEmptyBody, authController.resendEmail);
 authRouter.post('/login', isEmptyBody, authController.login);
 authRouter.get('/current', authenticate, authController.current);
 authRouter.post('/logout', authenticate, authController.logout);
